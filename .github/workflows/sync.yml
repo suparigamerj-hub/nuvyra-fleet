@@ -1,0 +1,22 @@
+name: Sync VPN Fleet
+on:
+  schedule:
+    - cron: '0 */12 * * *' # Automatically runs every 12 hours
+  workflow_dispatch:      # Allows manual trigger button
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python harvester.py
+      - name: Commit and Push fresh servers
+        run: |
+          git config --global user.name 'FleetBot'
+          git config --global user.email 'bot@nuvyra.internal'
+          git add servers.json
+          git commit -m "Auto-refresh server fleet" || exit 0
+          git push
