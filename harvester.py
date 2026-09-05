@@ -1,11 +1,10 @@
 import json
 import base64
-import requests
 
 def generate_wireguard_fleet():
     fleet = []
     
-    # 1. High-Performance WireGuard Global Nodes (US, Japan, Germany, Singapore)
+    # Genuine WireGuard Edge Nodes (Japan, US, Germany, Singapore)
     nodes = [
         {
             "id": "wg-jp-tokyo",
@@ -62,7 +61,6 @@ def generate_wireguard_fleet():
     ]
 
     for n in nodes:
-        # Build strict standard WireGuard client config
         conf_text = f"""[Interface]
 PrivateKey = {n['priv']}
 Address = {n['ip']}
@@ -84,10 +82,10 @@ AllowedIPs = 0.0.0.0/0
             "is_premium": n["is_premium"],
             "type": "wireguard",
             "wireguard_conf": conf_text,
-            "config_base64": base64.b64encode(conf_text.encode()).decode()
+            "config_base64": base64.b64encode(conf_text.encode("utf-8")).decode("utf-8")
         })
 
-    with open("servers.json", "w") as f:
+    with open("servers.json", "w", encoding="utf-8") as f:
         json.dump(fleet, f, indent=2)
     print(f"Generated {len(fleet)} genuine WireGuard endpoints successfully.")
 
