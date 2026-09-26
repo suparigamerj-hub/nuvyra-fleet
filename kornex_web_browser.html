@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kornex Web Browser & Shorties</title>
+    <meta name="theme-color" content="#060A14">
+    <meta name="description"
+        content="Fast, private web browser running entirely in the browser with vertical Shorties video mode.">
+
+    <!-- PWA Manifest Meta -->
+    <link rel="manifest"
+        href="data:application/manifest+json;base64,ewogICJuYW1lIjogIktvcm5leCBXZWIgQnJvd3NlciIsCiAgInNob3J0X25hbWUiOiAiS29ybmV4IiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwNjBBMTQiLAogICJ0aGVtZV9jb2xvciI6ICIjMDYwQTE0IgppfQ==">
+
+    <style>
+        :root {
+            --bg-base: #060A14;
+            --bg-surface: #0E1626;
+            --bg-surface-elevated: #162036;
+            --border-subtle: #1E293B;
+            --accent-cyan: #38BDF8;
+            --accent-purple: #C084FC;
+            --accent-flame: #F97316;
+            --text-main: #FFFFFF;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body,
+        html {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        /* App Layout Container */
+        #appContainer {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Top Navigation Bar */
+        .navbar {
+            height: 54px;
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 10px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn:hover,
+        .nav-btn:active {
+            background-color: var(--bg-surface-elevated);
+            color: var(--accent-cyan);
+        }
+
+        .nav-btn.active {
+            color: var(--accent-purple);
+            background: rgba(192, 132, 252, 0.15);
+        }
+
+        /* Omnibox URL / Search Bar */
+        .omnibox-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background-color: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 4px 12px;
+            gap: 8px;
+        }
+
+        .omnibox-wrap:focus-within {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+        }
+
+        .omnibox-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            font-size: 14px;
+        }
+
+        /* Viewport Area */
+        .viewport-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 54px - 48px);
+            background-color: var(--bg-base);
+        }
+
+        .tab-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: none;
+            background: #ffffff;
+        }
+
+        .tab-frame.active {
+            display: block;
+        }
+
+        /* Home Dashboard View */
+        .home-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 20px;
+            text-align: center;
+            overflow-y: auto;
+        }
+
+        .brand-logo {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 24px rgba(56, 189, 248, 0.2);
+        }
+
+        .brand-title {
+            font-size: 26px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FFF, var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+
+        .brand-sub {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .speed-dial {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            max-width: 440px;
+            width: 100%;
+        }
+
+        .dial-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+
+        .dial-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 16px;
+            background-color: var(--bg-surface-elevated);
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            transition: transform 0.2s;
+        }
+
+        .dial-card:hover .dial-icon {
+            transform: scale(1.08);
+            border-color: var(--accent-cyan);
+        }
+
+        .dial-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Shorties Mode Viewport */
+        .shorties-view {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 50;
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+        }
+
+        .shorties-view.active {
+            display: block;
+        }
+
+        .short-card {
+            width: 100%;
+            height: 100%;
+            scroll-snap-align: start;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #050505;
+        }
+
+        .short-card video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .short-overlay {
+            position: absolute;
+            bottom: 24px;
+            left: 16px;
+            right: 70px;
+            z-index: 10;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+        }
+
+        .short-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .short-author {
+            font-size: 13px;
+            color: var(--accent-cyan);
+        }
+
+        .short-actions {
+            position: absolute;
+            right: 16px;
+            bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .action-btn {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Bottom Tab / Quick Dock */
+        .bottom-dock {
+            height: 48px;
+            background-color: var(--bg-surface);
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 16px;
+        }
+
+        .dock-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            color: var(--text-muted);
+            font-size: 10px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+        }
+
+        .dock-item.active {
+            color: var(--accent-cyan);
+        }
+
+        .dock-item span {
+            font-size: 18px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="appContainer">
+        <!-- Top Navbar -->
+        <div class="navbar">
+            <button class="nav-btn" id="btnBack" onclick="historyBack()">&#x2190;</button>
+            <button class="nav-btn" id="btnHome" onclick="showHome()">&#x1F3E0;</button>
+
+            <div class="omnibox-wrap">
+                <span style="color: var(--accent-cyan); font-size: 14px;">&#x1F5E1;&#FE0F;</span>
+                <input type="text" id="urlInput" class="omnibox-input" placeholder="Search or type URL"
+                    onkeydown="handleEnter(event)">
+            </div>
+
+            <button class="nav-btn" id="btnShortiesToggle" onclick="toggleShortiesMode()">&#x1F4FC;</button>
+            <button class="nav-btn" onclick="incinerateSession()">&#x1F525;</button>
+        </div>
+
+        <!-- Main Viewport Area -->
+        <div class="viewport-container" id="viewport">
+            <!-- Default Home Speed Dial -->
+            <div class="home-view" id="homeView">
+                <div class="brand-logo">&#x1F405;</div>
+                <h1 class="brand-title">Kornex Web Browser</h1>
+                <p class="brand-sub">Zero APK required. Full PWA web browser & Shorties feed.</p>
+
+                <div class="speed-dial">
+                    <div class="dial-card" onclick="loadUrl('https://duckduckgo.com')">
+                        <div class="dial-icon">&#x1F50D;</div>
+                        <div class="dial-label">DuckDuckGo</div>
+                    </div>
+                    <div class="dial-card" onclick="loadUrl('https://en.wikipedia.org')">
+                        <div class="dial-icon">&#x1F4DA;</div>
+                        <div class="dial-label">Wikipedia</div>
+                    </div>
+                    <div class="dial-card" onclick="loadUrl('https://reddit.com')">
+                        <div class="dial-icon">&#x1F4AC;</div>
+                        <div class="dial-label">Reddit</div>
+                    </div>
+                    <div class="dial-card" onclick="loadUrl('https://github.com')">
+                        <div class="dial-icon">&#x1F4BB;</div>
+                        <div class="dial-label">GitHub</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Webframe Viewport -->
+            <iframe id="webFrame" class="tab-frame"></iframe>
+
+            <!-- Vertical Shorties Video Feed -->
+            <div class="shorties-view" id="shortiesView">
+                <div class="short-card">
+                    <video loop playsinline autoplay muted
+                        src="https://assets.mixkit.co/videos/preview/mixkit-futuristic-robotic-arm-in-a-laboratory-43407-large.mp4"></video>
+                    <div class="short-overlay">
+                        <div class="short-title">Cyber Lab Robotics v2</div>
+                        <div class="short-author">@kornex_tech</div>
+                    </div>
+                    <div class="short-actions">
+                        <button class="action-btn" onclick="likeShort(this)">&#x2764;&#FE0F;</button>
+                        <button class="action-btn" onclick="toggleMute(this)">&#x1F50A;</button>
+                    </div>
+                </div>
+                <div class="short-card">
+                    <video loop playsinline muted
+                        src="https://assets.mixkit.co/videos/preview/mixkit-hands-holding-a-smartphone-with-green-screen-41544-large.mp4"></video>
+                    <div class="short-overlay">
+                        <div class="short-title">Mobile Interface Matrix</div>
+                        <div class="short-author">@kornex_dev</div>
+                    </div>
+                    <div class="short-actions">
+                        <button class="action-btn" onclick="likeShort(this)">&#x2764;&#FE0F;</button>
+                        <button class="action-btn" onclick="toggleMute(this)">&#x1F507;</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Dock -->
+        <div class="bottom-dock">
+            <button class="dock-item active" onclick="showHome()">
+                <span>&#x1F3E0;</span>Home
+            </button>
+            <button class="dock-item" onclick="toggleShortiesMode()">
+                <span>&#x1F4F9;</span>Shorties
+            </button>
+            <button class="dock-item" onclick="incinerateSession()">
+                <span>&#x1F525;</span>Clean
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let isShorties = false;
+
+        function loadUrl(target) {
+            hideShorties();
+            const frame = document.getElementById("webFrame");
+            const home = document.getElementById("homeView");
+            const input = document.getElementById("urlInput");
+
+            let finalUrl = target;
+            if (!finalUrl.startsWith("http://") && !finalUrl.startsWith("https://")) {
+                if (finalUrl.includes(".") && !finalUrl.includes(" ")) {
+                    finalUrl = "https://" + finalUrl;
+                } else {
+                    finalUrl = "https://duckduckgo.com/?q=" + encodeURIComponent(finalUrl);
+                }
+            }
+
+            input.value = finalUrl;
+            home.style.display = "none";
+            frame.classList.add("active");
+            frame.src = finalUrl;
+        }
+
+        function handleEnter(e) {
+            if (e.key === "Enter") {
+                const query = e.target.value.trim();
+                if (query) loadUrl(query);
+            }
+        }
+
+        function showHome() {
+            hideShorties();
+            const frame = document.getElementById("webFrame");
+            const home = document.getElementById("homeView");
+            frame.classList.remove("active");
+            frame.src = "about:blank";
+            home.style.display = "flex";
+            document.getElementById("urlInput").value = "";
+        }
+
+        function historyBack() {
+            const frame = document.getElementById("webFrame");
+            if (frame.classList.contains("active")) {
+                showHome();
+            }
+        }
+
+        function toggleShortiesMode() {
+            if (isShorties) {
+                hideShorties();
+            } else {
+                showShorties();
+            }
+        }
+
+        function showShorties() {
+            isShorties = true;
+            document.getElementById("shortiesView").classList.add("active");
+            document.getElementById("btnShortiesToggle").classList.add("active");
+
+            // Auto-play videos on scroll
+            const videos = document.querySelectorAll(".short-card video");
+            videos.forEach((v, idx) => {
+                if (idx === 0) v.play().catch(() => { });
+            });
+        }
+
+        function hideShorties() {
+            isShorties = false;
+            document.getElementById("shortiesView").classList.remove("active");
+            document.getElementById("btnShortiesToggle").classList.remove("active");
+
+            const videos = document.querySelectorAll(".short-card video");
+            videos.forEach(v => v.pause());
+        }
+
+        function toggleMute(btn) {
+            const card = btn.closest(".short-card");
+            const video = card.querySelector("video");
+            video.muted = !video.muted;
+            btn.innerHTML = video.muted ? "&#x1F507;" : "&#x1F50A;";
+        }
+
+        function likeShort(btn) {
+            btn.style.color = btn.style.color === "red" ? "#fff" : "red";
+        }
+
+        function incinerateSession() {
+            localStorage.clear();
+            sessionStorage.clear();
+            showHome();
+            alert("Session & cache incinerated clean, Chief.");
+        }
+    </script>
+</body>
+
+</html>
